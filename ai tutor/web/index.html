@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Misconception Tutor — Diagnostic & Targeted Remediation</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --card-subtle: #f1f5f9;
+    --ink: #0f172a;
+    --mute: #64748b;
+    --line: #e2e8f0;
+    --ok: #10b981;
+    --ok-bg: #ecfdf5;
+    --ok-line: #a7f3d0;
+    --bad: #ef4444;
+    --bad-bg: #fef2f2;
+    --bad-line: #fecaca;
+    --warn: #f59e0b;
+    --warn-bg: #fffbeb;
+    --warn-line: #fde68a;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-subtle: #eff6ff;
+    --radius: 12px;
+    --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #090d16;
+      --card: #131b2e;
+      --card-subtle: #1c2640;
+      --ink: #f1f5f9;
+      --mute: #94a3b8;
+      --line: #22304d;
+      --ok: #34d399;
+      --ok-bg: #064e3b33;
+      --ok-line: #059669;
+      --bad: #f87171;
+      --bad-bg: #7f1d1d33;
+      --bad-line: #dc2626;
+      --warn: #fbbf24;
+      --warn-bg: #78350f33;
+      --warn-line: #d97706;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --accent-subtle: #1e3a8a33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  header.top-nav {
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .nav-inner {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px;
+  }
+  .brand-title { font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
+  .brand-sub { font-size: 12px; color: var(--mute); display: block; }
+  .nav-actions { display: flex; gap: 8px; align-items: center; }
+
+  main {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+    display: grid;
+    gap: 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  h1, h2, h3 { margin: 0 0 8px; font-weight: 600; }
+  h2 { font-size: 18px; display: flex; align-items: center; justify-content: space-between; }
+  .mute { color: var(--mute); font-size: 14px; }
+
+  input[type=text] {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 20px;
+    font-weight: 500;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--ink);
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type=text]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color .15s ease, transform .1s ease;
+  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  button:active:not(:disabled) { transform: scale(0.98); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.secondary {
+    background: var(--card-subtle);
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  button.secondary:hover:not(:disabled) {
+    background: var(--line);
+  }
+  button.sm { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+
+  .row { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+  .tag {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--line);
+    background: var(--card-subtle);
+    color: var(--mute);
+  }
+  .tag.diagnostic { color: var(--accent); border-color: var(--accent); background: var(--accent-subtle); }
+  .tag.practice { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
+  .tag.review { color: var(--ok); border-color: var(--ok); background: var(--ok-bg); }
+
+  /* Stepper / Progress Bar */
+  .stepper {
+    display: flex;
+    gap: 6px;
+    margin: 16px 0 20px;
+  }
+  .step-node {
+    flex: 1;
+    height: 8px;
+    background: var(--line);
+    border-radius: 4px;
+    transition: background .2s ease;
+  }
+  .step-node.done { background: var(--ok); }
+  .step-node.active { background: var(--accent); }
+
+  /* Prompt formatting */
+  .prompt-box {
+    background: var(--card-subtle);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0;
+    border-left: 5px solid var(--accent);
+  }
+  .prompt {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+  .math-num {
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 1.1em;
+  }
+
+  /* Live parser preview */
+  .parse-preview {
+    font-size: 13px;
+    margin-top: 6px;
+    font-family: monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .parse-preview.valid { color: var(--ok); }
+  .parse-preview.invalid { color: var(--bad); }
+
+  /* Quick keypad */
+  .keypad {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .key-btn {
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    background: var(--card-subtle);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .key-btn:hover { background: var(--line); }
+
+  /* Feedback box */
+  .fb {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border-radius: 10px;
+    border-left: 6px solid var(--mute);
+    background: var(--card-subtle);
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .fb.correct { border-color: var(--ok); background: var(--ok-bg); }
+  .fb.misconception { border-color: var(--bad); background: var(--bad-bg); }
+  .fb.other_error { border-color: var(--warn); background: var(--warn-bg); }
+  .fb-badge {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fb.correct .fb-badge { color: var(--ok); }
+  .fb.misconception .fb-badge { color: var(--bad); }
+  .fb.other_error .fb-badge { color: var(--warn); }
+  .fb-message { font-size: 16px; margin: 6px 0; }
+  .fb-solution {
+    font-size: 14px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.08);
+  }
+
+  /* Profile Misconception Cards */
+  .m-grid { display: grid; gap: 14px; margin-top: 14px; }
+  .m {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--card);
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .m:hover { border-color: var(--accent); }
+  .m-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .m-title { font-weight: 600; font-size: 16px; }
+  .m-desc { font-size: 13px; color: var(--mute); margin: 4px 0 12px; }
+  .m-status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 99px;
+    text-transform: uppercase;
+  }
+  .m.active .m-status { background: var(--bad-bg); color: var(--bad); border: 1px solid var(--bad-line); }
+  .m.candidate .m-status { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); }
+  .m.none .m-status { background: var(--card-subtle); color: var(--mute); border: 1px solid var(--line); }
+
+  .bar-container { display: flex; align-items: center; gap: 12px; margin: 10px 0 8px; }
+  .bar { flex: 1; height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--mute); transition: width .3s ease; }
+  .m.active .bar i { background: var(--bad); }
+  .m.candidate .bar i { background: var(--warn); }
+  .m.none .bar i { background: var(--ok); }
+  .bar-pct { font-size: 13px; font-weight: 700; min-width: 42px; text-align: right; }
+
+  .dots { display: flex; gap: 5px; align-items: center; margin-top: 8px; }
+  .dots b { width: 12px; height: 12px; border-radius: 50%; background: var(--line); display: inline-block; }
+  .dots b.misconception { background: var(--bad); }
+  .dots b.correct { background: var(--ok); }
+  .m-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+  /* History Modal / Drawer */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    max-width: 720px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
+  .modal-head {
+    padding: 16px 20px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-body { padding: 20px; overflow-y: auto; flex: 1; display: grid; gap: 14px; }
+  .hist-item {
+    border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: var(--card-subtle);
+  }
+  .hist-item.correct { border-left: 4px solid var(--ok); }
+  .hist-item.misconception { border-left: 4px solid var(--bad); }
+  .hist-item.other_error { border-left: 4px solid var(--warn); }
+
+  /* Evidence / Simulation section */
+  .ev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 16px 0; }
+  .ev-metric {
+    background: var(--card-subtle); border: 1px solid var(--line); border-radius: 8px; padding: 14px;
+    text-align: center;
+  }
+  .ev-metric .val { font-size: 26px; font-weight: 700; color: var(--accent); }
+  .ev-metric .label { font-size: 13px; color: var(--mute); margin-top: 4px; }
+  table.data-table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 14px; }
+  table.data-table th, table.data-table td { padding: 10px 12px; border-top: 1px solid var(--line); text-align: left; }
+  table.data-table th { background: var(--card-subtle); font-weight: 600; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="top-nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-icon">MT</div>
+      <div>
+        <span class="brand-title">Misconception Tutor</span>
+        <span class="brand-sub">Cognitive Bug Diagnostic & Targeted Remediation</span>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="secondary sm" id="btn-hist" title="View past answers in this session">
+        📜 History <span id="hist-badge" class="tag" style="margin-left:4px; padding:1px 6px;">0</span>
+      </button>
+      <button class="secondary sm" id="btn-switch" title="Switch or reset learner profile">
+        👤 <span id="current-user-name">Learner</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- START SCREEN -->
+  <section class="card" id="start">
+    <h2>Welcome to Misconception Tutor</h2>
+    <p class="mute">
+      Unlike traditional tutors that only mark answers right or wrong, Misconception Tutor identifies
+      the <strong>executable buggy belief</strong> behind your mistakes (such as adding fraction denominators
+      or treating percent changes additively) and immediately prescribes targeted practice to rewire it.
+    </p>
+    <div style="margin-top: 16px;">
+      <label for="name" style="font-weight:600; font-size:14px; display:block; margin-bottom:6px;">Your Name</label>
+      <input type="text" id="name" placeholder="e.g. Maya or Alex" maxlength="40">
+    </div>
+    <div class="row">
+      <button id="go">🚀 Begin 10-Question Diagnostic Check</button>
+      <button class="secondary" id="btn-browse-profiles">Browse Past Learners</button>
+    </div>
+  </section>
+
+  <!-- QUIZ / QUESTION SCREEN -->
+  <section class="card hidden" id="quiz">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="tag" id="phase">Diagnostic</span>
+        <span class="mute" id="step" style="font-weight:600;">Question 1 of 10</span>
+      </div>
+      <div class="mute" id="focus" style="font-style:italic;"></div>
+    </div>
+
+    <!-- Stepper bar for diagnostic questions -->
+    <div class="stepper" id="stepper"></div>
+
+    <div class="prompt-box">
+      <div class="prompt" id="prompt"></div>
+    </div>
+
+    <div style="position:relative;">
+      <label for="answer" style="font-size:13px; font-weight:600; color:var(--mute); display:block; margin-bottom:4px;">
+        Your Answer
+      </label>
+      <input type="text" id="answer" autocomplete="off" inputmode="text" placeholder="e.g. 5/6, 12, or -3">
+      <div class="parse-preview mute" id="parse-preview">
+        <span>Format preview:</span> <span id="parse-text">—</span>
+      </div>
+    </div>
+
+    <!-- Quick virtual math keys -->
+    <div class="keypad">
+      <span class="mute" style="font-size:12px; margin-right:4px; align-self:center;">Insert:</span>
+      <button type="button" class="key-btn" data-key="/">/ (fraction)</button>
+      <button type="button" class="key-btn" data-key="-">- (negative)</button>
+      <button type="button" class="key-btn" data-key=".">. (decimal)</button>
+      <button type="button" class="key-btn" data-action="backspace">⌫ Backspace</button>
+      <button type="button" class="key-btn" data-action="clear">Clear</button>
+    </div>
+
+    <div class="mute" id="hint" style="margin-top:10px;"></div>
+
+    <div class="row" style="margin-top:20px;">
+      <button id="submit">Submit Answer ↵</button>
+      <button id="next" class="hidden">Continue to Next Question →</button>
+    </div>
+
+    <!-- Feedback card -->
+    <div class="fb hidden" id="fb"></div>
+  </section>
+
+  <!-- COGNITIVE PROFILE SCREEN -->
+  <section class="card hidden" id="profile">
+    <h2>
+      <span>Learner Misconception Profile</span>
+      <span class="mute" style="font-size:14px;" id="answered-count">0 items answered</span>
+    </h2>
+    <div class="mute" style="margin-bottom:12px;">
+      Bar indicates <strong>P(active)</strong> computed via Beta posterior from the last 6 informative answers.
+      Two consecutive bug answers trigger <strong>Active (87.5%)</strong>; correct practice drops it back to <strong>Mastered</strong>.
+    </div>
+    <div class="m-grid" id="mlist"></div>
+  </section>
+
+  <!-- EMPIRICAL SIMULATION DASHBOARD -->
+  <section class="card" id="sim-section">
+    <h2>
+      <span>Empirical Evidence: Does Targeting Help?</span>
+      <span class="tag">Controlled Simulation</span>
+    </h2>
+    <p class="mute">
+      Runs simulated learners under identical learning rules (\(\text{LEARN}=0.75\)), isolating the pure effect of
+      <strong>targeted practice vs random allocation (control)</strong>.
+    </p>
+
+    <div class="row" style="margin-bottom:14px;">
+      <label for="sim-n" class="mute" style="font-weight:600;">Cohort Size:</label>
+      <select id="sim-n" style="padding:8px 12px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--ink);">
+        <option value="50">50 simulated students</option>
+        <option value="100">100 simulated students</option>
+        <option value="150" selected>150 simulated students (Standard)</option>
+        <option value="200">200 simulated students</option>
+        <option value="300">300 simulated students</option>
+      </select>
+      <button id="evbtn">⚡ Run Comparative Simulation</button>
+    </div>
+
+    <div id="ev"></div>
+  </section>
+</main>
+
+<!-- HISTORY MODAL -->
+<div class="modal-backdrop hidden" id="modal-hist">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 style="margin:0;">Session Answer History</h3>
+      <button class="secondary sm" id="btn-close-hist">✕ Close</button>
+    </div>
+    <div class="modal-body" id="hist-list">
+      <div class="mute" style="text-align:center; padding:30px;">No answers recorded yet in this session.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LEARNERS SWITCH MODAL -->
+<div class="modal-backdrop hidden" id="modal-learners">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 style="margin:0;">Switch Learner Profile</h3>
+      <button class="secondary sm" id="btn-close-learners">✕ Close</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <label for="new-learner-name" style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">
+          Create New Learner
+        </label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="new-learner-name" placeholder="Enter name" style="font-size:16px; padding:10px;">
+          <button id="btn-create-learner" style="white-space:nowrap;">Create</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--line); padding-top:14px;">
+        <div style="font-weight:600; font-size:14px; margin-bottom:8px;">Existing Profiles on this Server:</div>
+        <div id="saved-learners-list" style="display:grid; gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let lid = null, qid = null, currentPhase = "diagnostic", totalSteps = 10, currentStep = 1;
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {
+    headers: { "Content-Type": "application/json" },
+    ...opts
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "Request failed");
+  return j;
+}
+
+const el = (tag, cls, text) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+};
+
+const store = {
+  get: () => { try { return localStorage.getItem("lid"); } catch { return null; } },
+  set: v => { try { v == null ? localStorage.removeItem("lid") : localStorage.setItem("lid", v); } catch {} }
+};
+
+/* --- Answer Preview Parser --- */
+const NUM_REGEX = /^[+-]?[0-9]+(?:\.[0-9]+)?$|^[+-]?[0-9]+\/[0-9]+$/;
+function updateAnswerPreview() {
+  const val = ($("answer").value || "").trim().replace(/\u2212/g, "-");
+  const pText = $("parse-text");
+  const pBox = $("parse-preview");
+  if (!val) {
+    pText.textContent = "—";
+    pBox.className = "parse-preview mute";
+    return;
+  }
+  if (!NUM_REGEX.test(val)) {
+    pText.textContent = "Enter integer, decimal (0.75), or fraction (3/4)";
+    pBox.className = "parse-preview invalid";
+    return;
+  }
+  if (val.includes("/")) {
+    const [num, den] = val.split("/").map(Number);
+    if (den === 0) {
+      pText.textContent = "Denominator cannot be 0";
+      pBox.className = "parse-preview invalid";
+      return;
+    }
+    const dec = (num / den).toFixed(4).replace(/\.?0+$/, "");
+    pText.textContent = `Fraction ${val} ≈ ${dec}`;
+    pBox.className = "parse-preview valid";
+  } else {
+    pText.textContent = `Number ${val}`;
+    pBox.className = "parse-preview valid";
+  }
+}
+$("answer").addEventListener("input", updateAnswerPreview);
+
+/* --- Virtual Keypad Handler --- */
+document.querySelectorAll(".key-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const input = $("answer");
+    if (btn.dataset.key) {
+      input.value += btn.dataset.key;
+    } else if (btn.dataset.action === "backspace") {
+      input.value = input.value.slice(0, -1);
+    } else if (btn.dataset.action === "clear") {
+      input.value = "";
+    }
+    input.focus();
+    updateAnswerPreview();
+  });
+});
+
+/* --- Lifecycle & Flow --- */
+async function begin() {
+  $("go").disabled = true;
+  try {
+    const res = await api("/api/learners", {
+      method: "POST",
+      body: JSON.stringify({ name: $("name").value || "Learner" })
+    });
+    lid = res.learner_id;
+    store.set(lid);
+    await load();
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    $("go").disabled = false;
+  }
+}
+
+async function load() {
+  try {
+    const q = await api(`/api/learners/${lid}/next`);
+    qid = q.queue_id;
+    currentPhase = q.phase;
+    totalSteps = q.of;
+    currentStep = q.step;
+
+    $("start").classList.add("hidden");
+    $("quiz").classList.remove("hidden");
+    $("profile").classList.remove("hidden");
+
+    // Phase Badge & text
+    const phaseEl = $("phase");
+    phaseEl.className = `tag ${q.phase}`;
+    phaseEl.textContent = q.phase === "diagnostic" ? "🩺 Diagnostic"
+                        : q.phase === "practice" ? "🎯 Targeted Practice"
+                        : "🔄 Mixed Review";
+
+    $("step").textContent = `Question ${q.step} of ${q.of}`;
+    $("focus").textContent = q.focus ? `Focus: ${q.focus}` : "";
+    $("prompt").textContent = q.prompt;
+    $("hint").textContent = q.hint;
+
+    // Stepper nodes
+    renderStepper(q.phase, q.step, q.of);
+
+    // Reset Answer Input & Buttons
+    $("answer").value = "";
+    $("answer").disabled = false;
+    updateAnswerPreview();
+
+    $("submit").classList.remove("hidden");
+    $("next").classList.add("hidden");
+    $("fb").classList.add("hidden");
+    $("answer").focus();
+
+    // Refresh profile & history count
+    const prof = await api(`/api/learners/${lid}/profile`);
+    renderProfile(prof);
+    updateHistoryCount();
+  } catch (e) {
+    store.set(null);
+    lid = null;
+    $("start").classList.remove("hidden");
+    $("quiz").classList.add("hidden");
+    $("profile").classList.add("hidden");
+  }
+}
+
+function renderStepper(phase, step, of) {
+  const container = $("stepper");
+  container.replaceChildren();
+  if (phase !== "diagnostic" && of > 8) {
+    container.classList.add("hidden");
+    return;
+  }
+  container.classList.remove("hidden");
+  for (let i = 1; i <= of; i++) {
+    const node = el("div", "step-node");
+    if (i < step) node.classList.add("done");
+    else if (i === step) node.classList.add("active");
+    node.title = `Step ${i} of ${of}`;
+    container.append(node);
+  }
+}
+
+async function submit() {
+  const a = $("answer").value.trim();
+  if (!a) {
+    $("answer").focus();
+    return;
+  }
+  $("submit").disabled = true;
+  try {
+    const r = await api(`/api/learners/${lid}/answer`, {
+      method: "POST",
+      body: JSON.stringify({ queue_id: qid, answer: a })
+    });
+
+    const fb = $("fb");
+    fb.className = `fb ${r.outcome}`;
+    fb.replaceChildren();
+
+    const badge = el("div", "fb-badge");
+    if (r.outcome === "correct") {
+      badge.textContent = "✓ Correct Answer!";
+    } else if (r.outcome === "misconception") {
+      badge.textContent = `⚠ Misconception Caught: ${r.misconception}`;
+    } else {
+      badge.textContent = "✎ Incorrect (Slip / Other Error)";
+    }
+    fb.append(badge);
+
+    const msg = el("div", "fb-message", r.message);
+    fb.append(msg);
+
+    if (r.outcome !== "correct") {
+      const sol = el("div", "fb-solution");
+      sol.innerHTML = `<strong>Correct Answer:</strong> <code style="font-size:16px;">${r.correct_answer}</code>`;
+      fb.append(sol);
+    }
+
+    fb.classList.remove("hidden");
+
+    $("answer").disabled = true;
+    $("submit").classList.add("hidden");
+    $("next").classList.remove("hidden");
+    $("next").focus();
+
+    renderProfile(r.profile);
+    updateHistoryCount();
+  } catch (e) {
+    const fb = $("fb");
+    fb.className = "fb other_error";
+    fb.textContent = e.message;
+    fb.classList.remove("hidden");
+  } finally {
+    $("submit").disabled = false;
+  }
+}
+
+function renderProfile(p) {
+  $("current-user-name").textContent = p.learner.name;
+  $("answered-count").textContent = `${p.answered} total answered`;
+
+  $("mlist").replaceChildren(...p.misconceptions.map(m => {
+    const card = el("div", `m ${m.status}`);
+
+    const head = el("div", "m-header");
+    const titleBox = el("div");
+    const nameEl = el("span", "m-title", m.name);
+    const idTag = el("span", "tag", m.id);
+    idTag.style.marginLeft = "8px";
+    titleBox.append(nameEl, idTag);
+
+    const statusTag = el("span", "m-status", m.status);
+    head.append(titleBox, statusTag);
+
+    const desc = el("div", "m-desc", m.description);
+
+    const barBox = el("div", "bar-container");
+    const bar = el("div", "bar");
+    const fill = el("i");
+    const pct = Math.round(m.p * 100);
+    fill.style.width = `${pct}%`;
+    bar.append(fill);
+    const pctText = el("span", "bar-pct", `${pct}%`);
+    barBox.append(bar, pctText);
+
+    const dotsBox = el("div", "dots");
+    m.history.forEach(h => {
+      const dot = el("b", h);
+      dot.title = h === "misconception" ? "Bug answer given" : "Correct answer";
+      dotsBox.append(dot);
+    });
+
+    const actBox = el("div", "m-actions");
+    const pracBtn = el("button", "secondary sm", "⚡ Practice this");
+    pracBtn.onclick = async () => {
+      if (confirm(`Start a 5-question targeted practice session on "${m.name}"?`)) {
+        await api(`/api/learners/${lid}/practice`, {
+          method: "POST",
+          body: JSON.stringify({ target: m.id })
+        });
+        await load();
+      }
+    };
+    actBox.append(pracBtn);
+
+    card.append(head, desc, barBox, dotsBox, actBox);
+    return card;
+  }));
+}
+
+/* --- History Drawer & Management --- */
+async function updateHistoryCount() {
+  if (!lid) return;
+  try {
+    const hist = await api(`/api/learners/${lid}/history`);
+    $("hist-badge").textContent = hist.length;
+  } catch {}
+}
+
+async function showHistory() {
+  if (!lid) {
+    alert("Please start a session first.");
+    return;
+  }
+  const modal = $("modal-hist");
+  const list = $("hist-list");
+  list.replaceChildren(el("div", "mute", "Loading session history…"));
+  modal.classList.remove("hidden");
+
+  try {
+    const hist = await api(`/api/learners/${lid}/history`);
+    if (hist.length === 0) {
+      list.replaceChildren(el("div", "mute", "No questions answered yet."));
+      return;
+    }
+    list.replaceChildren(...hist.map(h => {
+      const item = el("div", `hist-item ${h.outcome}`);
+      const hhead = el("div", "row", null);
+      hhead.style.marginTop = "0";
+      hhead.style.justifyContent = "space-between";
+
+      const badge = el("span", "tag", h.phase);
+      const outcomeTag = el("strong", null, h.outcome.toUpperCase());
+      outcomeTag.style.color = h.outcome === "correct" ? "var(--ok)" : h.outcome === "misconception" ? "var(--bad)" : "var(--warn)";
+      hhead.append(badge, outcomeTag);
+
+      const prompt = el("div", "prompt", h.prompt);
+      prompt.style.fontSize = "16px";
+      prompt.style.margin = "8px 0";
+
+      const answers = el("div", "mute");
+      answers.innerHTML = `Your answer: <strong>${h.answer}</strong> | Correct: <strong>${h.correct_answer}</strong> (Focus: ${h.target_name})`;
+
+      const sol = el("div", "fb-solution", h.solution);
+
+      item.append(hhead, prompt, answers, sol);
+      return item;
+    }));
+  } catch (e) {
+    list.replaceChildren(el("div", "mute", "Error loading history: " + e.message));
+  }
+}
+
+$("btn-hist").onclick = showHistory;
+$("btn-close-hist").onclick = () => $("modal-hist").classList.add("hidden");
+
+/* --- Learner Profile Switching --- */
+async function showLearnerModal() {
+  $("modal-learners").classList.remove("hidden");
+  const list = $("saved-learners-list");
+  list.replaceChildren(el("div", "mute", "Loading learners…"));
+  try {
+    const learners = await api("/api/learners");
+    list.replaceChildren(...learners.map(l => {
+      const row = el("div", "hist-item");
+      row.style.display = "flex";
+      row.style.justifyContent = "space-between";
+      row.style.alignItems = "center";
+
+      const info = el("div");
+      info.innerHTML = `<strong>${l.name}</strong> <span class="mute">(${l.answered} answered, ID: ${l.id})</span>`;
+
+      const actions = el("div", "row");
+      actions.style.marginTop = "0";
+
+      const resumeBtn = el("button", "sm", "Select");
+      resumeBtn.onclick = async () => {
+        lid = l.id;
+        store.set(lid);
+        $("modal-learners").classList.add("hidden");
+        await load();
+      };
+
+      const resetBtn = el("button", "secondary sm", "Reset");
+      resetBtn.onclick = async () => {
+        if (confirm(`Reset all progress for ${l.name}?`)) {
+          await api(`/api/learners/${l.id}/reset`, { method: "POST" });
+          if (lid === l.id) await load();
+          else showLearnerModal();
+        }
+      };
+
+      actions.append(resumeBtn, resetBtn);
+      row.append(info, actions);
+      return row;
+    }));
+  } catch (e) {
+    list.replaceChildren(el("div", "mute", "Could not fetch profiles: " + e.message));
+  }
+}
+
+$("btn-switch").onclick = showLearnerModal;
+$("btn-browse-profiles").onclick = showLearnerModal;
+$("btn-close-learners").onclick = () => $("modal-learners").classList.add("hidden");
+
+$("btn-create-learner").onclick = async () => {
+  const name = $("new-learner-name").value.trim() || "New Learner";
+  const r = await api("/api/learners", { method: "POST", body: JSON.stringify({ name }) });
+  lid = r.learner_id;
+  store.set(lid);
+  $("modal-learners").classList.add("hidden");
+  await load();
+};
+
+/* --- Controlled Simulation Dashboard --- */
+async function evidence() {
+  const btn = $("evbtn");
+  const n = $("sim-n").value;
+  btn.disabled = true;
+  btn.textContent = "Running Simulation…";
+  try {
+    const r = await api(`/api/evidence?n=${n}`);
+
+    const grid = el("div", "ev-grid");
+    const dActive = r.diagnosis.active_only;
+    const dCand = r.diagnosis.candidate_or_active;
+
+    const m1 = el("div", "ev-metric");
+    m1.innerHTML = `<div class="val">${Math.round(dActive.precision * 100)}%</div><div class="label">Active Precision (Bug Detection Certainty)</div>`;
+
+    const m2 = el("div", "ev-metric");
+    m2.innerHTML = `<div class="val">${Math.round(dActive.recall * 100)}%</div><div class="label">Active Recall (Holders Flagged in 2 Items)</div>`;
+
+    const m3 = el("div", "ev-metric");
+    const targetReduction = Math.round((1 - r.bug_rate.targeted.post / r.bug_rate.targeted.pre) * 100);
+    m3.innerHTML = `<div class="val" style="color:var(--ok)">-${targetReduction}%</div><div class="label">Bug Rate Drop (Targeted Condition)</div>`;
+
+    const m4 = el("div", "ev-metric");
+    const controlReduction = Math.round((1 - r.bug_rate.control.post / r.bug_rate.control.pre) * 100);
+    m4.innerHTML = `<div class="val" style="color:var(--warn)">-${controlReduction}%</div><div class="label">Bug Rate Drop (Random Control)</div>`;
+
+    grid.append(m1, m2, m3, m4);
+
+    const table = el("table", "data-table");
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Condition</th>
+          <th>Pre-Practice Bug Rate</th>
+          <th>Post-Practice Bug Rate</th>
+          <th>Relative Error Reduction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>🎯 Targeted Practice (Our Tutor)</strong></td>
+          <td>${(r.bug_rate.targeted.pre * 100).toFixed(1)}%</td>
+          <td><strong style="color:var(--ok);">${(r.bug_rate.targeted.post * 100).toFixed(1)}%</strong></td>
+          <td><span class="tag" style="color:var(--ok); border-color:var(--ok);">-${targetReduction}%</span></td>
+        </tr>
+        <tr>
+          <td><strong>🎲 Random Allocation (Active Control)</strong></td>
+          <td>${(r.bug_rate.control.pre * 100).toFixed(1)}%</td>
+          <td>${(r.bug_rate.control.post * 100).toFixed(1)}%</td>
+          <td><span class="tag">-${controlReduction}%</span></td>
+        </tr>
+      </tbody>
+    `;
+
+    const note = el("p", "mute",
+      `Diagnosis across N=${r.n} simulated learners: Flagged Active precision is ${dActive.precision} (recall ${dActive.recall}); Candidate-or-Active precision is ${dCand.precision} (recall ${dCand.recall}).`
+    );
+
+    const assumptionsList = el("ul", "mute");
+    r.assumptions.forEach(a => assumptionsList.append(el("li", null, a)));
+
+    $("ev").replaceChildren(grid, table, note, el("h4", null, "Mathematical Simulation Assumptions:"), assumptionsList);
+  } catch (e) {
+    $("ev").textContent = "Simulation error: " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "⚡ Run Comparative Simulation";
+  }
+}
+
+/* --- Event Wire-ups --- */
+$("go").onclick = begin;
+$("submit").onclick = submit;
+$("next").onclick = load;
+$("evbtn").onclick = evidence;
+
+$("answer").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    if ($("next").classList.contains("hidden")) {
+      submit();
+    } else {
+      load();
+    }
+  }
+});
+
+// Auto-resume existing session if available
+lid = store.get();
+if (lid) {
+  load();
+}
+</script>
+</body>
+</html>
